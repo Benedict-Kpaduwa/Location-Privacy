@@ -1,7 +1,4 @@
-/**
- * MapView Component
- * Interactive Mapbox map displaying user location trajectories
- */
+
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl, { Map, Marker, Popup } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -37,7 +34,7 @@ export function MapView({
   const markers = useRef<Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Initialize map
+
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
@@ -54,7 +51,7 @@ export function MapView({
     map.current.on('load', () => {
       setMapLoaded(true);
       
-      // Add sources
+
       map.current!.addSource('trajectory', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
@@ -75,7 +72,7 @@ export function MapView({
         data: { type: 'FeatureCollection', features: [] },
       });
 
-      // Trajectory line layer
+
       map.current!.addLayer({
         id: 'trajectory-line',
         type: 'line',
@@ -87,7 +84,7 @@ export function MapView({
         },
       });
 
-      // Original points layer
+
       map.current!.addLayer({
         id: 'points-layer',
         type: 'circle',
@@ -108,7 +105,7 @@ export function MapView({
         },
       });
 
-      // Anonymized points layer (overlay)
+
       map.current!.addLayer({
         id: 'anonymized-points-layer',
         type: 'circle',
@@ -122,7 +119,7 @@ export function MapView({
         },
       });
 
-      // Heatmap layer
+
       map.current!.addLayer({
         id: 'heatmap-layer',
         type: 'heatmap',
@@ -158,7 +155,7 @@ export function MapView({
     };
   }, []);
 
-  // Toggle heatmap visibility
+
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
     
@@ -169,14 +166,14 @@ export function MapView({
     );
   }, [showHeatmap, mapLoaded]);
 
-  // Update map data when selection changes
+
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
     const selectedUser = users.find(u => u.user_id === selectedUserId);
     
     if (!selectedUser) {
-      // Clear all data
+
       (map.current.getSource('trajectory') as mapboxgl.GeoJSONSource)?.setData({
         type: 'FeatureCollection',
         features: [],
@@ -192,7 +189,7 @@ export function MapView({
       return;
     }
 
-    // Filter locations by time if filter is set
+
     let locations = selectedUser.locations;
     if (timeFilter) {
       const startTime = timeFilter.start;
@@ -203,12 +200,12 @@ export function MapView({
       });
     }
 
-    // Sort by timestamp
+
     const sortedLocations = [...locations].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
-    // Create trajectory line
+
     const trajectoryCoords = sortedLocations.map(loc => [loc.lon, loc.lat]);
     (map.current.getSource('trajectory') as mapboxgl.GeoJSONSource)?.setData({
       type: 'FeatureCollection',
@@ -222,7 +219,7 @@ export function MapView({
       }] : [],
     });
 
-    // Create point features
+
     const pointFeatures = sortedLocations.map(loc => ({
       type: 'Feature' as const,
       properties: {
@@ -242,7 +239,7 @@ export function MapView({
       });
     }
 
-    // Heatmap data - all users
+
     const heatmapFeatures = users.flatMap(user =>
       user.locations.map(loc => ({
         type: 'Feature' as const,
@@ -258,7 +255,7 @@ export function MapView({
       features: heatmapFeatures,
     });
 
-    // Fit bounds to user's locations
+
     if (sortedLocations.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       sortedLocations.forEach(loc => bounds.extend([loc.lon, loc.lat]));
@@ -266,7 +263,7 @@ export function MapView({
     }
   }, [users, selectedUserId, timeFilter, showOriginal, mapLoaded]);
 
-  // Update anonymized points
+
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
@@ -291,9 +288,9 @@ export function MapView({
     }
   }, [anonymizedLocations, showAnonymized, mapLoaded]);
 
-  // Add home/work markers for selected user
+
   useEffect(() => {
-    // Clear existing markers
+
     markers.current.forEach(m => m.remove());
     markers.current = [];
 
@@ -302,7 +299,7 @@ export function MapView({
     const selectedUser = users.find(u => u.user_id === selectedUserId);
     if (!selectedUser) return;
 
-    // Home marker
+
     if (selectedUser.home_location) {
       const el = document.createElement('div');
       el.className = 'home-marker';
@@ -317,7 +314,7 @@ export function MapView({
       markers.current.push(marker);
     }
 
-    // Work marker
+
     if (selectedUser.work_location) {
       const el = document.createElement('div');
       el.className = 'work-marker';
@@ -337,7 +334,7 @@ export function MapView({
     <div className="relative w-full h-full" style={{ minHeight: '400px' }}>
       <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
       
-      {/* Premium Legend */}
+
       <div className="absolute bottom-5 left-5 rounded-2xl bg-[hsl(225,20%,8%)]/95 backdrop-blur-xl border border-[hsl(225,15%,18%)] p-4 min-w-[140px] shadow-xl">
         <div className="text-[9px] font-semibold text-[hsl(215,15%,45%)] uppercase tracking-widest mb-3">
           Location Types
@@ -368,7 +365,7 @@ export function MapView({
         </div>
       </div>
 
-      {/* Risk Indicator */}
+
       {selectedUserId && riskScores && riskScores[selectedUserId] && (
         <div 
           className="absolute top-5 left-5 rounded-2xl bg-[hsl(225,20%,8%)]/95 backdrop-blur-xl border border-[hsl(225,15%,18%)] p-5 shadow-xl animate-fade-in"

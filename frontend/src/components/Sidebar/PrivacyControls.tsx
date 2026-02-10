@@ -1,6 +1,4 @@
-/**
- * PrivacyControls Component - Premium Design
- */
+
 import { useState } from 'react';
 import { Shield, Grid3X3, Circle, Waves, Loader2, RotateCcw, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -90,14 +88,14 @@ export function PrivacyControls({
 
   return (
     <div className="rounded-2xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,15%)] overflow-hidden">
-      {/* Header */}
+
       <div className="px-4 py-3 border-b border-[hsl(225,15%,12%)] flex items-center gap-2">
         <Lock className="w-4 h-4 text-[hsl(152,82%,45%)]" />
         <span className="text-sm font-semibold text-white">Privacy Protection</span>
       </div>
       
       <div className="p-4 space-y-4">
-        {/* Technique Cards */}
+
         <div className="space-y-2">
           {TECHNIQUES.map((technique) => {
             const isSelected = selectedTechnique === technique.id;
@@ -138,7 +136,7 @@ export function PrivacyControls({
           })}
         </div>
 
-        {/* Parameter Slider */}
+
         <div className="p-4 rounded-xl bg-[hsl(225,15%,6%)] border border-[hsl(225,15%,12%)]">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs text-[hsl(215,15%,45%)] uppercase tracking-wider">{currentTechnique.paramLabel}</span>
@@ -168,7 +166,7 @@ export function PrivacyControls({
           </div>
         </div>
 
-        {/* Privacy Level Indicator */}
+
         <div className="flex items-center justify-between px-1">
           <span className="text-xs text-[hsl(215,15%,45%)]">Protection Level</span>
           <span 
@@ -179,7 +177,7 @@ export function PrivacyControls({
           </span>
         </div>
 
-        {/* Action Buttons */}
+
         <div className="flex gap-2 pt-2">
           {isAnonymized && (
             <Button

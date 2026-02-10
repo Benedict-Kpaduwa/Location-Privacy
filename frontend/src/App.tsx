@@ -1,7 +1,3 @@
-/**
- * Main App Component
- * Location Privacy Teaching System - Premium Design
- */
 import { useState, useCallback } from 'react';
 import { 
   Database, 
@@ -139,14 +135,14 @@ function App() {
   return (
     <TooltipProvider>
       <div className="h-screen flex flex-col overflow-hidden bg-[hsl(225,25%,5%)]">
-        {/* ===== PREMIUM HEADER ===== */}
+
         <header className="flex-shrink-0 relative">
-          {/* Gradient line */}
+
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(252,100%,69%)] to-transparent opacity-50" />
           
           <div className="px-6 py-4 bg-[hsl(225,20%,8%)]">
             <div className="flex items-center justify-between">
-              {/* Logo */}
+
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[hsl(252,100%,69%)] to-[hsl(185,100%,50%)] flex items-center justify-center glow-primary">
@@ -167,7 +163,7 @@ function App() {
                 </div>
               </div>
               
-              {/* Actions */}
+
               <div className="flex items-center gap-3">
                 <Button
                   onClick={() => handleGenerateDataset(true)}
@@ -212,7 +208,7 @@ function App() {
               </div>
             </div>
             
-            {/* Stats Bar */}
+
             {dataset && (
               <div className="flex items-center gap-8 mt-5 pt-4 border-t border-[hsl(225,15%,15%)]">
                 <div className="flex items-center gap-6">
@@ -241,7 +237,7 @@ function App() {
                   )}
                 </div>
                 
-                {/* Quick Stats */}
+
                 <div className="ml-auto flex items-center gap-4">
                   <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[hsl(225,15%,10%)] border border-[hsl(225,15%,15%)]">
                     <Users className="w-4 h-4 text-[hsl(252,100%,69%)]" />
@@ -277,10 +273,8 @@ function App() {
             )}
           </div>
         </header>
-        
-        {/* ===== MAIN CONTENT ===== */}
         <main className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar */}
+
           <aside className="w-80 flex-shrink-0 border-r border-[hsl(225,15%,12%)] bg-[hsl(225,20%,6%)]">
             <ScrollArea className="h-full">
               <div className="p-4 space-y-4">
@@ -326,7 +320,7 @@ function App() {
             </ScrollArea>
           </aside>
           
-          {/* Map Area */}
+
           <div className="flex-1 relative">
             {dataset ? (
               <MapView
@@ -341,7 +335,7 @@ function App() {
             ) : (
               <div className="h-full flex flex-col items-center justify-center bg-[hsl(225,20%,6%)]">
                 <div className="text-center max-w-xl mx-auto px-8">
-                  {/* Hero */}
+
                   <div className="relative mb-10">
                     <div className="w-40 h-40 mx-auto rounded-[2rem] bg-gradient-to-br from-[hsl(252,100%,69%)]/10 to-[hsl(185,100%,50%)]/10 flex items-center justify-center border border-[hsl(225,15%,15%)] animate-float">
                       <MapPin className="w-20 h-20 text-[hsl(252,100%,69%)]" />
@@ -386,12 +380,12 @@ function App() {
             )}
           </div>
           
-          {/* Right Dashboard */}
+
           {dataset && Object.keys(riskScores).length > 0 && (
             <aside className="w-[420px] flex-shrink-0 border-l border-[hsl(225,15%,12%)] bg-[hsl(225,20%,6%)]">
               <ScrollArea className="h-full">
                 <div className="p-5 space-y-5">
-                  {/* Risk Overview Card */}
+
                   <div className="gradient-border p-5">
                     <div className="section-title mb-4 flex items-center gap-2">
                       <Shield className="w-4 h-4" />
@@ -417,7 +411,7 @@ function App() {
                     )}
                   </div>
                   
-                  {/* Stats Grid */}
+
                   <div className="grid grid-cols-2 gap-3">
                     {[
                       { value: dataset.users.length, label: 'Users', icon: Users, color: 'hsl(252,100%,69%)' },
@@ -433,7 +427,7 @@ function App() {
                     ))}
                   </div>
                   
-                  {/* Chart */}
+
                   <ComparisonChart
                     originalRisk={Object.values(riskScores)[0]}
                     anonymizedRisk={anonymizedResult?.new_risk_score}
@@ -441,7 +435,7 @@ function App() {
                     chartType={chartType}
                   />
                   
-                  {/* Protection Info */}
+
                   {anonymizedResult && (
                     <Card className="animate-fade-in bg-[hsl(225,20%,8%)] border-[hsl(225,15%,15%)]">
                       <CardHeader className="pb-2">

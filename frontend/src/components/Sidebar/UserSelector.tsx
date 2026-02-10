@@ -1,6 +1,4 @@
-/**
- * UserSelector Component - Premium Design
- */
+
 import { Users, Home, Briefcase, MapPin, AlertTriangle, ChevronDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { UserProfile, RiskScore } from '../../types';
@@ -37,7 +35,7 @@ export function UserSelector({
 
   return (
     <div className="rounded-2xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,15%)] overflow-hidden">
-      {/* Header */}
+
       <div className="px-4 py-3 border-b border-[hsl(225,15%,12%)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[hsl(252,100%,69%)]" />
@@ -48,7 +46,7 @@ export function UserSelector({
         </span>
       </div>
       
-      {/* User List */}
+
       <ScrollArea className="h-52">
         <div className="p-2">
           {sortedUsers.map((user) => {
@@ -66,7 +64,7 @@ export function UserSelector({
                     : 'hover:bg-[hsl(225,15%,12%)]'
                 }`}
               >
-                {/* Avatar with risk ring */}
+
                 <div 
                   className="relative w-10 h-10 rounded-xl flex items-center justify-center font-semibold text-sm"
                   style={{ 
@@ -117,7 +115,7 @@ export function UserSelector({
         </div>
       </ScrollArea>
 
-      {/* Selected User Details */}
+
       {selectedUser && selectedRisk && (
         <div className="p-4 border-t border-[hsl(225,15%,12%)] bg-[hsl(225,15%,6%)] animate-fade-in">
           <div className="grid grid-cols-2 gap-3">

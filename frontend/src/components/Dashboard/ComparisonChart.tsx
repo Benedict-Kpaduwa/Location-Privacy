@@ -1,6 +1,4 @@
-/**
- * ComparisonChart Component - Premium Design
- */
+
 import {
   BarChart,
   Bar,
@@ -147,7 +145,7 @@ export function ComparisonChart({
           </ResponsiveContainer>
         </div>
 
-        {/* Legend */}
+
         <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-[hsl(225,15%,12%)]">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded" style={{ background: COLORS.original }} />
@@ -161,7 +159,7 @@ export function ComparisonChart({
           )}
         </div>
 
-        {/* Utility Loss */}
+
         {utilityLoss !== undefined && (
           <div className="mt-4 p-4 rounded-xl bg-[hsl(225,15%,6%)] border border-[hsl(225,15%,12%)]">
             <div className="flex items-center justify-between mb-2">

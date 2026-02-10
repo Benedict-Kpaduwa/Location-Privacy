@@ -1,7 +1,4 @@
-"""
-Synthetic Dataset Generator
-Generates realistic location data with daily patterns for Calgary, AB
-"""
+
 import random
 from datetime import datetime, timedelta
 from typing import List, Tuple, Optional
@@ -16,8 +13,8 @@ from app.models.schemas import LocationPoint, UserProfile, Dataset
 
 
 def generate_home_location() -> Tuple[float, float]:
-    """Generate a random home location within Calgary residential areas"""
-    # Bias towards residential neighborhoods
+
+
     residential_areas = [
         (51.05, -114.11),  # Kensington
         (51.08, -114.08),  # North Hill
@@ -31,7 +28,6 @@ def generate_home_location() -> Tuple[float, float]:
     ]
     
     base = random.choice(residential_areas)
-    # Add some randomness (approx 1-2km radius)
     lat = base[0] + random.gauss(0, 0.01)
     lon = base[1] + random.gauss(0, 0.01)
     
@@ -42,7 +38,7 @@ def generate_home_location() -> Tuple[float, float]:
 
 
 def generate_work_location() -> Tuple[float, float]:
-    """Generate a work location, biased towards downtown and business areas"""
+
     work_areas = [
         CALGARY_LANDMARKS["downtown"],
         CALGARY_LANDMARKS["university"],
@@ -63,11 +59,11 @@ def generate_work_location() -> Tuple[float, float]:
 
 
 def generate_leisure_locations(n: int = 3) -> List[Tuple[float, float]]:
-    """Generate frequently visited leisure locations"""
+
     leisure_spots = list(CALGARY_LANDMARKS.values())
     selected = random.sample(leisure_spots, min(n, len(leisure_spots)))
     
-    # Add some noise
+
     result = []
     for spot in selected:
         lat = spot[0] + random.gauss(0, 0.003)
@@ -81,7 +77,7 @@ def generate_leisure_locations(n: int = 3) -> List[Tuple[float, float]]:
 
 def interpolate_transit(start: Tuple[float, float], end: Tuple[float, float], 
                         num_points: int = 3) -> List[Tuple[float, float]]:
-    """Generate transit points between two locations"""
+
     points = []
     for i in range(1, num_points + 1):
         t = i / (num_points + 1)
@@ -98,10 +94,10 @@ def generate_day_trajectory(
     leisure_spots: List[Tuple[float, float]],
     is_weekday: bool
 ) -> List[LocationPoint]:
-    """Generate a realistic day's worth of location data"""
+
     points = []
     
-    # Morning at home (6-8 AM)
+
     morning_time = date.replace(hour=random.randint(6, 7), minute=random.randint(0, 59))
     points.append(LocationPoint(
         lat=home[0] + random.gauss(0, 0.0005),
@@ -111,7 +107,7 @@ def generate_day_trajectory(
     ))
     
     if is_weekday and work:
-        # Commute to work (8-9 AM)
+
         commute_start = date.replace(hour=random.randint(7, 8), minute=random.randint(30, 59))
         transit_points = interpolate_transit(home, work, random.randint(2, 4))
         for i, tp in enumerate(transit_points):
@@ -122,7 +118,7 @@ def generate_day_trajectory(
                 location_type="transit"
             ))
         
-        # At work (9 AM - 5 PM, multiple readings)
+
         work_start = date.replace(hour=9, minute=random.randint(0, 30))
         for hour_offset in [0, 2, 4, 6, 8]:
             points.append(LocationPoint(
@@ -132,7 +128,7 @@ def generate_day_trajectory(
                 location_type="work"
             ))
         
-        # Commute home (5-6 PM)
+
         commute_home_start = date.replace(hour=17, minute=random.randint(0, 30))
         transit_points = interpolate_transit(work, home, random.randint(2, 4))
         for i, tp in enumerate(transit_points):
@@ -143,12 +139,12 @@ def generate_day_trajectory(
                 location_type="transit"
             ))
     else:
-        # Weekend or no work - visit leisure spots
+
         if leisure_spots and random.random() > 0.3:
             spot = random.choice(leisure_spots)
             visit_time = date.replace(hour=random.randint(10, 15), minute=random.randint(0, 59))
             
-            # Transit to spot
+
             transit_points = interpolate_transit(home, spot, 2)
             for i, tp in enumerate(transit_points):
                 points.append(LocationPoint(
@@ -158,7 +154,7 @@ def generate_day_trajectory(
                     location_type="transit"
                 ))
             
-            # At the spot
+
             points.append(LocationPoint(
                 lat=spot[0] + random.gauss(0, 0.0005),
                 lon=spot[1] + random.gauss(0, 0.0005),
@@ -172,7 +168,7 @@ def generate_day_trajectory(
                 location_type="leisure"
             ))
     
-    # Evening at home (7-11 PM)
+
     for hour in [19, 21]:
         evening_time = date.replace(hour=hour, minute=random.randint(0, 59))
         points.append(LocationPoint(
@@ -186,9 +182,9 @@ def generate_day_trajectory(
 
 
 def generate_user_profile(user_id: str, num_days: int = 14) -> UserProfile:
-    """Generate a complete user profile with location history"""
+
     home = generate_home_location()
-    work = generate_work_location() if random.random() > 0.15 else None  # 85% have work
+    work = generate_work_location() if random.random() > 0.15 else None
     leisure_spots = generate_leisure_locations(random.randint(2, 5))
     
     all_locations = []
@@ -203,7 +199,7 @@ def generate_user_profile(user_id: str, num_days: int = 14) -> UserProfile:
         )
         all_locations.extend(day_points)
     
-    # Create home/work location points
+
     home_point = LocationPoint(
         lat=home[0], lon=home[1],
         timestamp=datetime.now(),
@@ -224,14 +220,14 @@ def generate_user_profile(user_id: str, num_days: int = 14) -> UserProfile:
 
 
 def generate_dataset(num_users: Optional[int] = None) -> Dataset:
-    """Generate a complete dataset with multiple users"""
+
     if num_users is None:
         num_users = random.randint(NUM_USERS_MIN, NUM_USERS_MAX)
     
     users = []
     for i in range(num_users):
         user_id = f"user_{i+1:03d}"
-        num_days = random.randint(7, 21)  # 1-3 weeks of data
+        num_days = random.randint(7, 21)
         user_profile = generate_user_profile(user_id, num_days)
         users.append(user_profile)
     

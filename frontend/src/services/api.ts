@@ -1,6 +1,4 @@
-/**
- * API Service for communicating with the backend
- */
+
 import axios from 'axios';
 import type {
     Dataset,
@@ -18,9 +16,7 @@ const api = axios.create({
     },
 });
 
-/**
- * Generate a synthetic dataset
- */
+
 export async function generateDataset(
     numUsers?: number,
     refresh?: boolean
@@ -33,9 +29,7 @@ export async function generateDataset(
     return response.data;
 }
 
-/**
- * Calculate risk scores for all users in the dataset
- */
+
 export async function calculateRisk(
     dataset: Dataset
 ): Promise<Record<string, RiskScore>> {
@@ -43,9 +37,7 @@ export async function calculateRisk(
     return response.data;
 }
 
-/**
- * Calculate risk for a specific user
- */
+
 export async function calculateUserRisk(
     userId: string,
     dataset: Dataset
@@ -54,9 +46,7 @@ export async function calculateUserRisk(
     return response.data;
 }
 
-/**
- * Apply k-anonymity anonymization
- */
+
 export async function applyKAnonymity(
     dataset: Dataset,
     k: number
@@ -68,9 +58,7 @@ export async function applyKAnonymity(
     return response.data;
 }
 
-/**
- * Apply spatial cloaking anonymization
- */
+
 export async function applySpatialCloaking(
     dataset: Dataset,
     radiusMeters: number
@@ -82,9 +70,7 @@ export async function applySpatialCloaking(
     return response.data;
 }
 
-/**
- * Apply differential privacy anonymization
- */
+
 export async function applyDifferentialPrivacy(
     dataset: Dataset,
     epsilon: number
@@ -96,9 +82,7 @@ export async function applyDifferentialPrivacy(
     return response.data;
 }
 
-/**
- * Identify patterns for a specific user
- */
+
 export async function identifyPatterns(
     userId: string,
     dataset: Dataset
@@ -107,9 +91,7 @@ export async function identifyPatterns(
     return response.data;
 }
 
-/**
- * Health check
- */
+
 export async function healthCheck(): Promise<{ status: string }> {
     const response = await api.get<{ status: string }>('/health');
     return response.data;

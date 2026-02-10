@@ -1,6 +1,4 @@
-/**
- * TimelineSlider Component - Premium Design
- */
+
 import { useMemo } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Clock } from 'lucide-react';

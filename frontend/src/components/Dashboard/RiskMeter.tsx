@@ -1,6 +1,4 @@
-/**
- * RiskMeter Component - Premium Design
- */
+
 import { getRiskLevel } from '../../types';
 
 interface RiskMeterProps {
@@ -36,7 +34,7 @@ export function RiskMeter({ risk, label, size = 'md' }: RiskMeterProps) {
     <div className="flex flex-col items-center">
       <div className="relative" style={{ width: s.outer, height: s.outer }}>
         <svg className="relative -rotate-90" width={s.outer} height={s.outer}>
-          {/* Background Ring */}
+
           <circle
             cx={s.outer / 2}
             cy={s.outer / 2}
@@ -45,7 +43,7 @@ export function RiskMeter({ risk, label, size = 'md' }: RiskMeterProps) {
             stroke="hsl(225,15%,15%)"
             strokeWidth={s.stroke}
           />
-          {/* Progress Ring */}
+
           <circle
             cx={s.outer / 2}
             cy={s.outer / 2}
@@ -63,7 +61,7 @@ export function RiskMeter({ risk, label, size = 'md' }: RiskMeterProps) {
           />
         </svg>
 
-        {/* Center Content */}
+
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span 
             className={`font-bold number-display ${s.text}`}

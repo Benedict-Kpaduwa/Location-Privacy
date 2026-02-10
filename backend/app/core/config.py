@@ -1,9 +1,7 @@
-"""
-Application Configuration
-"""
+
 from typing import Tuple
 
-# Calgary, AB coordinates and bounds
+
 CITY_CENTER: Tuple[float, float] = (51.0447, -114.0719)
 CITY_BOUNDS = {
     "min_lat": 50.85,
@@ -12,13 +10,13 @@ CITY_BOUNDS = {
     "max_lon": -113.85
 }
 
-# Dataset generation settings
+
 NUM_USERS_MIN = 30
 NUM_USERS_MAX = 50
 POINTS_PER_USER_MIN = 50
 POINTS_PER_USER_MAX = 150
 
-# Common Calgary locations for realistic data
+
 CALGARY_LANDMARKS = {
     "downtown": (51.0447, -114.0719),
     "university": (51.0777, -114.1300),
@@ -38,7 +36,7 @@ CALGARY_LANDMARKS = {
     "crowfoot": (51.1234, -114.2008),
 }
 
-# Privacy algorithm parameters
+
 K_ANONYMITY_VALUES = [2, 5, 10]
-SPATIAL_CLOAKING_RADII = [100, 500, 1000]  # meters
+SPATIAL_CLOAKING_RADII = [100, 500, 1000]
 DIFFERENTIAL_PRIVACY_EPSILONS = [0.1, 0.5, 1.0, 2.0]

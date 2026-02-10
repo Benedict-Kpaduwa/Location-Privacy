@@ -1,6 +1,4 @@
-/**
- * TypeScript type definitions matching backend Pydantic models
- */
+
 
 export interface LocationPoint {
     lat: number;
@@ -58,7 +56,7 @@ export interface PatternResult {
     risk_factors: string[];
 }
 
-// Privacy technique types
+
 export type PrivacyTechnique = 'k-anonymity' | 'spatial-cloaking' | 'differential-privacy';
 
 export interface PrivacyParameters {
@@ -67,7 +65,7 @@ export interface PrivacyParameters {
     'differential-privacy': { epsilon: number };
 }
 
-// Risk level categorization
+
 export type RiskLevel = 'low' | 'medium' | 'high';
 
 export function getRiskLevel(risk: number): RiskLevel {
@@ -77,7 +75,7 @@ export function getRiskLevel(risk: number): RiskLevel {
 }
 
 export function getRiskColor(risk: number): string {
-    if (risk < 40) return '#22c55e'; // green
-    if (risk < 70) return '#eab308'; // yellow
-    return '#ef4444'; // red
+    if (risk < 40) return '#22c55e';
+    if (risk < 70) return '#eab308';
+    return '#ef4444';
 }

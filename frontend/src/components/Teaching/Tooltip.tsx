@@ -1,7 +1,4 @@
-/**
- * Educational Tooltip Component
- * Provides contextual explanations for privacy concepts
- */
+
 import { useState } from 'react';
 import { Info, X, Lightbulb, BookOpen } from 'lucide-react';
 
@@ -72,13 +69,13 @@ export function EducationalTooltip({ concept, children }: TooltipProps) {
       
       {isOpen && (
         <>
-          {/* Backdrop */}
+
           <div 
             className="fixed inset-0 z-40 bg-black/50"
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Tooltip content */}
+
           <div className="absolute z-50 w-80 left-0 top-full mt-2 animate-fade-in">
             <div className="glass-card p-4 shadow-xl">
               <div className="flex items-start justify-between mb-3">

@@ -1,6 +1,4 @@
-/**
- * Walkthrough Component - Premium Design
- */
+
 import { useState } from 'react';
 import { ChevronRight, ChevronLeft, X, Sparkles, CheckCircle, MapPin, Shield, Activity, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -77,16 +75,16 @@ export function Walkthrough({ onClose, onStep }: WalkthroughProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-6 pointer-events-none">
-      {/* Backdrop */}
+
       <div 
         className="fixed inset-0 bg-black/70 backdrop-blur-sm pointer-events-auto"
         onClick={onClose}
       />
       
-      {/* Modal */}
+
       <div className="relative w-full max-w-md pointer-events-auto animate-slide-up">
         <div className="rounded-2xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,18%)] shadow-2xl overflow-hidden">
-          {/* Close Button */}
+
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-[hsl(215,15%,45%)] hover:text-white hover:bg-[hsl(225,15%,15%)] transition-all z-10"
@@ -94,7 +92,7 @@ export function Walkthrough({ onClose, onStep }: WalkthroughProps) {
             <X className="w-4 h-4" />
           </button>
 
-          {/* Progress Bar */}
+
           <div className="p-5 pb-0">
             <div className="flex items-center justify-between text-[10px] text-[hsl(215,15%,45%)] uppercase tracking-widest mb-2">
               <span>Step {currentStep + 1} of {WALKTHROUGH_STEPS.length}</span>
@@ -102,9 +100,9 @@ export function Walkthrough({ onClose, onStep }: WalkthroughProps) {
             <Progress value={progressPercent} className="h-1" />
           </div>
 
-          {/* Content */}
+
           <div className="p-6">
-            {/* Icon */}
+
             <div 
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
               style={{ 
@@ -123,7 +121,7 @@ export function Walkthrough({ onClose, onStep }: WalkthroughProps) {
               {step.content}
             </p>
 
-            {/* Navigation */}
+
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
@@ -154,7 +152,7 @@ export function Walkthrough({ onClose, onStep }: WalkthroughProps) {
             </div>
           </div>
 
-          {/* Step dots */}
+
           <div className="pb-5 flex items-center justify-center gap-1.5">
             {WALKTHROUGH_STEPS.map((_, i) => (
               <button
