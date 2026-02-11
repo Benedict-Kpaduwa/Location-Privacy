@@ -31,7 +31,8 @@ COPY backend/ .
 
 COPY --from=frontend-build /frontend/dist /var/www/html
 
-COPY nginx.root.conf /etc/nginx/sites-available/default
+RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default
+COPY nginx.root.conf /etc/nginx/conf.d/app.conf
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
