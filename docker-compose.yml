@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api
+        - VITE_MAPBOX_TOKEN=${VITE_MAPBOX_TOKEN:-}
+    ports:
+      - "10000:10000"
+    restart: always
+    environment:
+      - VITE_API_URL=/api
+      - VITE_MAPBOX_TOKEN=${VITE_MAPBOX_TOKEN:-}

@@ -655,19 +655,31 @@ lt-privacy/
 
 The project uses a **multi-stage Docker build** that outputs a single container running both the frontend (via Nginx) and the backend (via Uvicorn).
 
-### Build & Run
+### Deployment Options
 
-```bash
-# Build the Docker image
-docker build \
-  --build-arg VITE_MAPBOX_TOKEN=your_mapbox_token_here \
-  -t location-privacy .
+#### Option 1: Render (Web Service)
 
-# Run the container
-docker run -p 10000:10000 location-privacy
-```
+1. Connect your GitHub repository to Render.
+2. Select **Docker** as the runtime.
+3. Add your `VITE_MAPBOX_TOKEN` as a **Build Argument**.
+4. Set the port to `10000` (Render should detect this from the Dockerfile).
 
-The application will be available at **http://localhost:10000**.
+#### Option 2: DigitalOcean App Platform
+
+1. Connect your GitHub repository to DigitalOcean.
+2. The platform will detect the `.do/app.yaml` configuration.
+3. Configure your `VITE_MAPBOX_TOKEN` in the **Environment Variables** (set it for both Build and Run time).
+4. Deploy.
+
+#### Option 3: DigitalOcean Droplet (Docker Compose)
+
+1. SSH into your Droplet.
+2. Install Docker and Docker Compose.
+3. Clone the repository.
+4. Run:
+   ```bash
+   VITE_MAPBOX_TOKEN=your_token_here docker-compose up -d --build
+   ```
 
 ### How It Works
 
