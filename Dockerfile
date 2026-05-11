@@ -5,7 +5,7 @@ WORKDIR /frontend
 COPY frontend/package.json frontend/pnpm-lock.yaml* frontend/package-lock.json* ./
 
 RUN corepack enable && corepack prepare pnpm@latest --activate 2>/dev/null; \
-    if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; \
+    if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild esbuild; \
     elif [ -f package-lock.json ]; then npm ci; \
     else npm install; fi
 
