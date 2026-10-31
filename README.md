@@ -655,46 +655,21 @@ lt-privacy/
 
 The project uses a **multi-stage Docker build** that outputs a single container running both the frontend (via Nginx) and the backend (via Uvicorn).
 
-### Deployment Options
-
-#### Option 1: Render (Web Service)
-
-1. Connect your GitHub repository to Render.
-2. Select **Docker** as the runtime.
-3. Add your `VITE_MAPBOX_TOKEN` as a **Build Argument**.
-4. Set the port to `10000` (Render should detect this from the Dockerfile).
-
-#### Option 2: DigitalOcean App Platform
-
-1. Connect your GitHub repository to DigitalOcean.
-2. The platform will detect the `.do/app.yaml` configuration.
-3. Configure your `VITE_MAPBOX_TOKEN` in the **Environment Variables** (set it for both Build and Run time).
-4. Deploy.
-
-#### Option 3: DigitalOcean Droplet (Docker Compose)
-
-1. SSH into your Droplet.
-2. Install Docker and Docker Compose.
-3. Clone the repository.
-4. Run:
-   ```bash
-   VITE_MAPBOX_TOKEN=your_token_here docker-compose up -d --build
-   ```
-
-#### Option 4: AWS EC2 (Docker Compose)
+### Deploying to AWS EC2 (Docker Compose)
 
 1. Launch an EC2 instance (Amazon Linux 2023, `t3.small` or larger; the frontend build needs ~2 GB RAM, or add swap on `t3.micro`).
-2. Security group: allow inbound TCP **22** (your IP only) and **80** (and **443** if you add TLS).
+2. Security group: allow inbound TCP **22** (your IP only) and **80** and **443**.
 3. SSH in, then run `deploy/ec2-setup.sh` (installs Docker + Compose), and log out/in.
-4. Clone the repo and start it on port 80:
+4. Clone the repo and start it. Caddy serves the app on ports 80/443 and gets a free HTTPS certificate for `DOMAIN` automatically:
    ```bash
    git clone https://github.com/Benedict-Kpaduwa/Location-Privacy.git && cd Location-Privacy
-   printf 'VITE_MAPBOX_TOKEN=your_token_here\nHOST_PORT=80\n' > .env
+   printf 'VITE_MAPBOX_TOKEN=your_token_here\nDOMAIN=location-privacy.benedictk.dev\n' > .env
    docker compose up -d --build
    ```
-5. Visit `http://<instance-public-ip>`. To update: `git pull && docker compose up -d --build`.
+5. Create a DNS **A record** for `DOMAIN` pointing to the instance's Elastic IP (do this before step 4 so the certificate can be issued).
+6. Visit `https://<DOMAIN>`. To update: `git pull && docker compose up -d --build`.
 
-For a custom domain and HTTPS, point a DNS record (or an Elastic IP) at the instance and put an Application Load Balancer with an ACM certificate in front, or run Caddy/certbot on the host.
+When `DOMAIN` is unset (local use), Caddy serves `https://localhost`.
 
 ### How It Works
 

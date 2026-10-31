@@ -6,9 +6,29 @@ services:
       args:
         - VITE_API_URL=/api
         - VITE_MAPBOX_TOKEN=${VITE_MAPBOX_TOKEN:-}
-    ports:
-      - "${HOST_PORT:-10000}:10000"
+    expose:
+      - "10000"
     restart: always
     environment:
       - VITE_API_URL=/api
       - VITE_MAPBOX_TOKEN=${VITE_MAPBOX_TOKEN:-}
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: always
+
+volumes:
+  caddy_data:
+  caddy_config:
