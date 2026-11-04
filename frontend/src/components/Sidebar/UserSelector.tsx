@@ -105,7 +105,8 @@ export function UserSelector({
             </div>
           </div>
           <p className="mt-3 text-[14px] text-mute">
-            <span className="font-extrabold text-ink">{selectedRisk.min_points_to_identify}</span> points are enough to identify this user.
+            <span className="font-extrabold text-ink">{selectedRisk.min_points_to_identify}</span>{' '}
+            {selectedRisk.min_points_to_identify === 1 ? 'point is' : 'points are'} enough to identify this user.
           </p>
         </div>
       )}

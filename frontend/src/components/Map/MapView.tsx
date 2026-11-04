@@ -335,7 +335,7 @@ export function MapView({
 
   return (
     <div className="relative h-full w-full min-h-[320px]">
-      <div ref={mapContainer} className="absolute inset-0" />
+      <div ref={mapContainer} className="absolute inset-0 h-full w-full" />
 
       <div className="material absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] rounded-[20px] px-4 py-3 sm:bottom-4 sm:left-4">
         <div className="eyebrow mb-2 hidden sm:block">Location types</div>

@@ -525,6 +525,8 @@ function App() {
                   className={cn(
                     'pressable flex h-12 flex-1 items-center justify-center gap-2 rounded-[16px] text-[15px] font-bold disabled:opacity-35',
                     active ? 'bg-brand text-white' : 'bg-field text-mute',
+                    // From lg up the Explore panel is always visible, so Map is the active tab.
+                    tab.id === 'map' && view === 'explore' && 'lg:bg-brand lg:text-white',
                     tab.hideFromLg && 'lg:hidden'
                   )}
                 >
