@@ -75,7 +75,7 @@ export function getRiskLevel(risk: number): RiskLevel {
 }
 
 export function getRiskColor(risk: number): string {
-    if (risk < 40) return '#22c55e';
-    if (risk < 70) return '#eab308';
-    return '#ef4444';
+    if (risk < 40) return 'var(--risk-low)';
+    if (risk < 70) return 'var(--risk-mid)';
+    return 'var(--risk-high)';
 }

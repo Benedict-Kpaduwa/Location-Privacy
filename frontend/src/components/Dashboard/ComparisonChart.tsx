@@ -29,21 +29,24 @@ interface ComparisonChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[hsl(225,20%,10%)] border border-[hsl(225,15%,18%)] p-3 rounded-xl shadow-xl text-sm">
-        <p className="font-semibold text-white mb-2">{label}</p>
+      <div className="rounded-[16px] bg-page p-3 text-sm shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+        <p className="mb-2 font-extrabold">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
-            <span className="text-[hsl(215,15%,55%)]">{entry.name}:</span>
-            <span className="font-bold number-display" style={{ color: entry.color }}>
-              {entry.value.toFixed(1)}%
-            </span>
+            <div className="size-2.5 rounded-full" style={{ background: entry.color || entry.payload?.fill }} />
+            <span className="text-mute">{entry.name}:</span>
+            <span className="num">{entry.value.toFixed(1)}%</span>
           </div>
         ))}
       </div>
     );
   }
   return null;
+};
+
+const COLORS = {
+  original: 'var(--brand)',
+  protected: 'var(--risk-low)',
 };
 
 export function ComparisonChart({
@@ -54,20 +57,16 @@ export function ComparisonChart({
 }: ComparisonChartProps) {
   if (!originalRisk) {
     return (
-      <div className="rounded-2xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,15%)] p-5">
-        <div className="section-title mb-4 flex items-center gap-2">
-          <BarChart3 className="w-4 h-4" />
-          Privacy Analysis
+      <section className="rounded-[20px] bg-field p-5">
+        <header className="mb-4 flex items-center gap-2 text-[17px] font-extrabold tracking-tight">
+          <BarChart3 className="size-5 text-mute" aria-hidden />
+          Privacy analysis
+        </header>
+        <div className="flex h-36 flex-col items-center justify-center gap-2 text-center">
+          <Activity className="size-9 text-mute/50" aria-hidden />
+          <p className="text-[15px] text-mute">Tap “Analyze risk” to see metrics.</p>
         </div>
-        <div className="h-36 flex items-center justify-center">
-          <div className="text-center">
-            <Activity className="w-10 h-10 text-[hsl(215,15%,25%)] mx-auto mb-3" />
-            <p className="text-sm text-[hsl(215,15%,45%)]">
-              Click "Analyze Risk" to see metrics
-            </p>
-          </div>
-        </div>
-      </div>
+      </section>
     );
   }
 
@@ -85,45 +84,45 @@ export function ComparisonChart({
     { metric: 'Work', Original: originalRisk.work_inferred ? 100 : 20, Protected: anonymizedRisk?.work_inferred ? 100 : 20 },
   ];
 
-  const COLORS = {
-    original: 'hsl(0,85%,60%)',
-    protected: 'hsl(152,82%,45%)',
-  };
+  const utilityColor =
+    utilityLoss === undefined
+      ? 'var(--risk-low)'
+      : utilityLoss > 50 ? 'var(--risk-high)' : utilityLoss > 25 ? 'var(--risk-mid)' : 'var(--risk-low)';
 
   return (
-    <div className="rounded-2xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,15%)] overflow-hidden">
-      <div className="px-5 py-3 border-b border-[hsl(225,15%,12%)] flex items-center gap-2">
-        <BarChart3 className="w-4 h-4 text-[hsl(252,100%,69%)]" />
-        <span className="text-sm font-semibold text-white">Privacy Analysis</span>
-      </div>
-      
-      <div className="p-5">
-        <div className="h-44">
+    <section className="rounded-[20px] bg-field p-4 sm:p-5">
+      <header className="mb-4 flex items-center gap-2 text-[17px] font-extrabold tracking-tight">
+        <BarChart3 className="size-5 text-mute" aria-hidden />
+        Privacy analysis
+      </header>
+
+      <div className="rounded-[16px] bg-page p-3 sm:p-4">
+        <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             {chartType === 'bar' ? (
               <BarChart data={barData} barCategoryGap="25%">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(225,15%,15%)" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fill: 'hsl(215,15%,45%)', fontSize: 11 }}
-                  axisLine={{ stroke: 'hsl(225,15%,15%)' }}
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: 'var(--muted)', fontSize: 12, fontWeight: 600 }}
+                  axisLine={{ stroke: 'var(--line)' }}
                   tickLine={false}
                 />
-                <YAxis 
-                  tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }}
+                <YAxis
+                  tick={{ fill: 'var(--muted)', fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                   domain={[0, 100]}
                   width={30}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(225,15%,10%)' }} />
-                <Bar dataKey="Original" radius={[6, 6, 0, 0]} maxBarSize={30}>
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--field)' }} />
+                <Bar dataKey="Original" radius={[8, 8, 0, 0]} maxBarSize={34}>
                   {barData.map((_, index) => (
                     <Cell key={`orig-${index}`} fill={COLORS.original} />
                   ))}
                 </Bar>
                 {anonymizedRisk && (
-                  <Bar dataKey="Protected" radius={[6, 6, 0, 0]} maxBarSize={30}>
+                  <Bar dataKey="Protected" radius={[8, 8, 0, 0]} maxBarSize={34}>
                     {barData.map((_, index) => (
                       <Cell key={`prot-${index}`} fill={COLORS.protected} />
                     ))}
@@ -132,54 +131,47 @@ export function ComparisonChart({
               </BarChart>
             ) : (
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
-                <PolarGrid stroke="hsl(225,15%,18%)" />
-                <PolarAngleAxis dataKey="metric" tick={{ fill: 'hsl(215,15%,55%)', fontSize: 10 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'hsl(215,15%,45%)', fontSize: 9 }} axisLine={false} />
-                <Radar name="Original" dataKey="Original" stroke={COLORS.original} fill={COLORS.original} fillOpacity={0.25} strokeWidth={2} />
+                <PolarGrid stroke="var(--line)" />
+                <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--muted)', fontSize: 11 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--muted)', fontSize: 10 }} axisLine={false} />
+                <Radar name="Original" dataKey="Original" stroke={COLORS.original} fill={COLORS.original} fillOpacity={0.2} strokeWidth={2} />
                 {anonymizedRisk && (
-                  <Radar name="Protected" dataKey="Protected" stroke={COLORS.protected} fill={COLORS.protected} fillOpacity={0.25} strokeWidth={2} />
+                  <Radar name="Protected" dataKey="Protected" stroke={COLORS.protected} fill={COLORS.protected} fillOpacity={0.2} strokeWidth={2} />
                 )}
-                <Legend wrapperStyle={{ fontSize: '10px' }} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
               </RadarChart>
             )}
           </ResponsiveContainer>
         </div>
 
-
-        <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-[hsl(225,15%,12%)]">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded" style={{ background: COLORS.original }} />
-            <span className="text-xs text-[hsl(215,15%,55%)]">Original</span>
+        <div className="mt-3 flex items-center justify-center gap-5 border-t border-line pt-3">
+          <div className="flex items-center gap-2 text-[13px] font-semibold">
+            <span className="size-3 rounded-full" style={{ background: COLORS.original }} />
+            Original
           </div>
           {anonymizedRisk && (
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded" style={{ background: COLORS.protected }} />
-              <span className="text-xs text-[hsl(215,15%,55%)]">Protected</span>
+            <div className="flex items-center gap-2 text-[13px] font-semibold">
+              <span className="size-3 rounded-full" style={{ background: COLORS.protected }} />
+              Protected
             </div>
           )}
         </div>
-
-
-        {utilityLoss !== undefined && (
-          <div className="mt-4 p-4 rounded-xl bg-[hsl(225,15%,6%)] border border-[hsl(225,15%,12%)]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[hsl(215,15%,45%)] flex items-center gap-1.5">
-                <TrendingDown className="w-3 h-3" />
-                Data Utility Loss
-              </span>
-              <span 
-                className="text-sm font-bold number-display"
-                style={{ 
-                  color: utilityLoss > 50 ? 'hsl(0,85%,60%)' : utilityLoss > 25 ? 'hsl(38,95%,55%)' : 'hsl(152,82%,45%)'
-                }}
-              >
-                {utilityLoss.toFixed(1)}%
-              </span>
-            </div>
-            <Progress value={utilityLoss} className="h-1.5" />
-          </div>
-        )}
       </div>
-    </div>
+
+      {utilityLoss !== undefined && (
+        <div className="mt-3 rounded-[16px] bg-page p-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="flex items-center gap-1.5 text-[14px] text-mute">
+              <TrendingDown className="size-4" aria-hidden />
+              Data utility loss
+            </span>
+            <span className="num text-[16px]" style={{ color: utilityColor }}>
+              {utilityLoss.toFixed(1)}%
+            </span>
+          </div>
+          <Progress value={utilityLoss} className="h-2" />
+        </div>
+      )}
+    </section>
   );
 }

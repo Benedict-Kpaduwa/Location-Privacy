@@ -1,5 +1,4 @@
-
-import { getRiskLevel } from '../../types';
+import { getRiskColor } from '../../types';
 
 interface RiskMeterProps {
   risk: number;
@@ -8,78 +7,58 @@ interface RiskMeterProps {
 }
 
 export function RiskMeter({ risk, label, size = 'md' }: RiskMeterProps) {
-  const level = getRiskLevel(risk);
-  
-  const colors = {
-    low: { main: 'hsl(152,82%,45%)', glow: 'rgba(16,185,129,0.4)' },
-    medium: { main: 'hsl(38,95%,55%)', glow: 'rgba(245,158,11,0.4)' },
-    high: { main: 'hsl(0,85%,60%)', glow: 'rgba(239,68,68,0.4)' },
-  };
+  const color = getRiskColor(risk);
 
-  const color = colors[level];
-  
   const sizes = {
-    sm: { outer: 100, stroke: 8, text: 'text-xl', label: 'text-xs' },
-    md: { outer: 140, stroke: 10, text: 'text-3xl', label: 'text-sm' },
-    lg: { outer: 180, stroke: 12, text: 'text-4xl', label: 'text-base' },
+    sm: { outer: 104, stroke: 10, text: 'text-[26px]' },
+    md: { outer: 140, stroke: 12, text: 'text-[34px]' },
+    lg: { outer: 180, stroke: 14, text: 'text-[44px]' },
   };
 
   const s = sizes[size];
   const radius = (s.outer - s.stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progress = (risk / 100) * circumference;
-  const dashOffset = circumference - progress;
+  const dashOffset = circumference - (Math.min(100, Math.max(0, risk)) / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center">
+    <div
+      className="flex flex-col items-center"
+      role="img"
+      aria-label={`${label ?? 'Risk'}: ${risk.toFixed(0)} percent`}
+    >
       <div className="relative" style={{ width: s.outer, height: s.outer }}>
-        <svg className="relative -rotate-90" width={s.outer} height={s.outer}>
-
+        <svg className="-rotate-90" width={s.outer} height={s.outer} aria-hidden>
           <circle
             cx={s.outer / 2}
             cy={s.outer / 2}
             r={radius}
             fill="none"
-            stroke="hsl(225,15%,15%)"
+            stroke="var(--line)"
             strokeWidth={s.stroke}
           />
-
           <circle
             cx={s.outer / 2}
             cy={s.outer / 2}
             r={radius}
             fill="none"
-            stroke={color.main}
+            stroke={color}
             strokeWidth={s.stroke}
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
-            style={{ 
-              transition: 'stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1)',
-              filter: `drop-shadow(0 0 6px ${color.glow})`
-            }}
+            style={{ transition: 'stroke-dashoffset 800ms cubic-bezier(0.2, 0.8, 0.2, 1)' }}
           />
         </svg>
 
-
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span 
-            className={`font-bold number-display ${s.text}`}
-            style={{ color: color.main, textShadow: `0 0 20px ${color.glow}` }}
-          >
+          <span className={`num leading-none ${s.text}`} style={{ color }}>
             {risk.toFixed(0)}
           </span>
-          <span className="text-[9px] text-[hsl(215,15%,45%)] uppercase tracking-widest mt-0.5">
-            Risk %
-          </span>
+          <span className="eyebrow mt-1">Risk %</span>
         </div>
       </div>
-      
-      {label && (
-        <div className={`mt-3 ${s.label} text-[hsl(215,15%,55%)] font-medium`}>
-          {label}
-        </div>
-      )}
+
+      {label && <div className="mt-2 text-[15px] font-bold">{label}</div>}
     </div>
   );
 }

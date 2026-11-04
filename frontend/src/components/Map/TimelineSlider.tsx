@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Clock } from 'lucide-react';
@@ -33,30 +32,32 @@ export function TimelineSlider({ locations, onChange }: TimelineSliderProps) {
   if (locations.length === 0) return null;
 
   return (
-    <div className="rounded-2xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,15%)] overflow-hidden">
-      <div className="px-4 py-3 border-b border-[hsl(225,15%,12%)] flex items-center gap-2">
-        <Clock className="w-4 h-4 text-[hsl(185,100%,50%)]" />
-        <span className="text-sm font-semibold text-white">Time Filter</span>
-      </div>
-      
-      <div className="p-4 space-y-4">
+    <section className="rounded-[20px] bg-field p-4">
+      <header className="mb-4 flex items-center gap-2 text-[17px] font-extrabold tracking-tight">
+        <Clock className="size-5 text-mute" aria-hidden />
+        Time filter
+      </header>
+
+      <div className="rounded-[16px] bg-page p-4">
         <Slider
+          aria-label="Time range"
           defaultValue={[0, 24]}
           min={0}
           max={24}
           step={1}
           onValueChange={handleChange}
+          className="py-2"
         />
-        
-        <div className="flex justify-between text-xs text-[hsl(215,15%,45%)]">
+
+        <div className="mt-2 flex justify-between text-[13px] font-semibold text-mute">
           <span>{formatHour(timeRange.min)}</span>
           <span>{formatHour(timeRange.max)}</span>
         </div>
-        
-        <div className="text-xs text-center text-[hsl(215,15%,45%)]">
-          Showing <span className="font-semibold text-white">{locations.length}</span> location points
-        </div>
       </div>
-    </div>
+
+      <p className="mt-3 text-center text-[14px] text-mute">
+        Showing <span className="font-extrabold text-ink">{locations.length}</span> location points
+      </p>
+    </section>
   );
 }

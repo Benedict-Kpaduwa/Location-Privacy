@@ -1,8 +1,7 @@
-
-import { Users, Home, Briefcase, MapPin, AlertTriangle, ChevronDown } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Users, Home, Briefcase, MapPin, AlertTriangle } from 'lucide-react';
 import type { UserProfile, RiskScore } from '../../types';
-import { getRiskLevel } from '../../types';
+import { getRiskColor } from '../../types';
+import { tint } from '@/lib/utils';
 
 interface UserSelectorProps {
   users: UserProfile[];
@@ -23,131 +22,93 @@ export function UserSelector({
     return riskB - riskA;
   });
 
-  const getRiskColor = (risk: number) => {
-    const level = getRiskLevel(risk);
-    if (level === 'high') return 'hsl(0,85%,60%)';
-    if (level === 'medium') return 'hsl(38,95%,55%)';
-    return 'hsl(152,82%,45%)';
-  };
-
   const selectedUser = users.find(u => u.user_id === selectedUserId);
   const selectedRisk = selectedUserId ? riskScores[selectedUserId] : null;
 
   return (
-    <div className="rounded-2xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,15%)] overflow-hidden">
-
-      <div className="px-4 py-3 border-b border-[hsl(225,15%,12%)] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-[hsl(252,100%,69%)]" />
-          <span className="text-sm font-semibold text-white">Users</span>
+    <section className="rounded-[20px] bg-field p-2">
+      <header className="flex items-center justify-between px-3 pb-2 pt-3">
+        <div className="flex items-center gap-2 text-[17px] font-extrabold tracking-tight">
+          <Users className="size-5 text-mute" aria-hidden />
+          Users
         </div>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-[hsl(252,100%,69%)]/10 text-[hsl(252,100%,69%)] font-medium">
+        <span className="rounded-full bg-brand/12 px-2.5 py-0.5 text-[13px] font-extrabold text-accent-text">
           {users.length}
         </span>
-      </div>
-      
+      </header>
 
-      <ScrollArea className="h-52">
-        <div className="p-2">
-          {sortedUsers.map((user) => {
-            const risk = riskScores[user.user_id];
-            const isSelected = user.user_id === selectedUserId;
-            const riskColor = risk ? getRiskColor(risk.overall_risk) : 'hsl(215,15%,45%)';
-            
-            return (
+      <ul className="max-h-60 space-y-1 overflow-y-auto overscroll-contain pr-0.5 lg:max-h-64">
+        {sortedUsers.map(user => {
+          const risk = riskScores[user.user_id];
+          const isSelected = user.user_id === selectedUserId;
+          const riskColor = risk ? getRiskColor(risk.overall_risk) : 'var(--muted)';
+
+          return (
+            <li key={user.user_id}>
               <button
-                key={user.user_id}
                 onClick={() => onSelectUser(isSelected ? null : user.user_id)}
-                className={`w-full p-3 flex items-center gap-3 rounded-xl transition-all text-left mb-1 ${
-                  isSelected
-                    ? 'bg-[hsl(252,100%,69%)]/10 ring-1 ring-[hsl(252,100%,69%)]/40'
-                    : 'hover:bg-[hsl(225,15%,12%)]'
+                aria-pressed={isSelected}
+                className={`pressable flex min-h-14 w-full items-center gap-3 rounded-[16px] px-3 py-2 text-left ${
+                  isSelected ? 'bg-page outline-2 -outline-offset-2 outline-brand' : 'hover:bg-page/60'
                 }`}
               >
-
-                <div 
-                  className="relative w-10 h-10 rounded-xl flex items-center justify-center font-semibold text-sm"
-                  style={{ 
-                    background: `${riskColor}15`,
-                    color: riskColor,
-                    boxShadow: risk ? `0 0 12px ${riskColor}30` : 'none'
-                  }}
+                <span
+                  className="grid size-10 shrink-0 place-items-center rounded-full text-sm font-extrabold"
+                  style={{ background: tint(riskColor, 14), color: riskColor }}
                 >
                   {user.user_id.slice(-2)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white truncate">
-                      User {user.user_id.slice(-4)}
-                    </span>
-                    {risk && (
-                      <span 
-                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
-                        style={{ 
-                          background: `${riskColor}20`,
-                          color: riskColor
-                        }}
-                      >
-                        {risk.overall_risk.toFixed(0)}%
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[11px] text-[hsl(215,15%,45%)]">
-                      {user.locations.length} pts
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {risk?.home_inferred && (
-                        <Home className="w-3 h-3 text-[hsl(152,82%,45%)]" />
-                      )}
-                      {risk?.work_inferred && (
-                        <Briefcase className="w-3 h-3 text-[hsl(185,100%,50%)]" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <ChevronDown className={`w-4 h-4 text-[hsl(215,15%,35%)] transition-transform ${isSelected ? 'rotate-180' : ''}`} />
-              </button>
-            );
-          })}
-        </div>
-      </ScrollArea>
+                </span>
 
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[16px] font-bold leading-tight">
+                    User {user.user_id.slice(-4)}
+                  </span>
+                  <span className="mt-0.5 flex items-center gap-2 text-[13px] text-mute">
+                    {user.locations.length} points
+                    {risk?.home_inferred && <Home className="size-3.5 text-risk-low" aria-label="Home found" />}
+                    {risk?.work_inferred && <Briefcase className="size-3.5 text-navy dark:text-ink" aria-label="Work found" />}
+                  </span>
+                </span>
+
+                {risk && (
+                  <span
+                    className="rounded-full px-2.5 py-1 text-[13px] font-extrabold"
+                    style={{ background: tint(riskColor, 14), color: riskColor }}
+                  >
+                    {risk.overall_risk.toFixed(0)}%
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
       {selectedUser && selectedRisk && (
-        <div className="p-4 border-t border-[hsl(225,15%,12%)] bg-[hsl(225,15%,6%)] animate-fade-in">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl bg-[hsl(225,20%,10%)] border border-[hsl(225,15%,15%)]">
-              <div className="flex items-center gap-1 text-[10px] text-[hsl(215,15%,45%)] uppercase tracking-wider mb-1">
-                <AlertTriangle className="w-3 h-3" />
-                Risk
+        <div className="animate-fade-in mt-2 rounded-[16px] bg-page p-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="eyebrow flex items-center gap-1">
+                <AlertTriangle className="size-3" aria-hidden /> Risk
               </div>
-              <div 
-                className="text-xl font-bold number-display"
-                style={{ color: getRiskColor(selectedRisk.overall_risk) }}
-              >
+              <div className="num mt-1 text-[26px] leading-none" style={{ color: getRiskColor(selectedRisk.overall_risk) }}>
                 {selectedRisk.overall_risk.toFixed(1)}%
               </div>
             </div>
-            <div className="p-3 rounded-xl bg-[hsl(225,20%,10%)] border border-[hsl(225,15%,15%)]">
-              <div className="flex items-center gap-1 text-[10px] text-[hsl(215,15%,45%)] uppercase tracking-wider mb-1">
-                <MapPin className="w-3 h-3" />
-                Unique
+            <div>
+              <div className="eyebrow flex items-center gap-1">
+                <MapPin className="size-3" aria-hidden /> Unique
               </div>
-              <div className="text-xl font-bold number-display text-[hsl(185,100%,50%)]">
+              <div className="num mt-1 text-[26px] leading-none">
                 {selectedRisk.uniqueness_score.toFixed(1)}%
               </div>
             </div>
           </div>
-          
-          <p className="mt-3 text-xs text-[hsl(215,15%,45%)] text-center">
-            <span className="font-semibold text-white">{selectedRisk.min_points_to_identify}</span>
-            {' '}points needed for identification
+          <p className="mt-3 text-[14px] text-mute">
+            <span className="font-extrabold text-ink">{selectedRisk.min_points_to_identify}</span> points are enough to identify this user.
           </p>
         </div>
       )}
-    </div>
+    </section>
   );
 }

@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
-import { 
-  Database, 
-  AlertTriangle, 
+import { useState, useCallback, type ComponentType, type ReactNode } from 'react';
+import {
+  Database,
+  AlertTriangle,
   Loader2,
   MapPin,
   Layers,
@@ -10,21 +10,19 @@ import {
   Users,
   Zap,
   ChevronRight,
-  Sparkles,
   Target,
   Lock,
   Home,
-  Building
+  Building,
+  SlidersHorizontal,
+  BarChart3,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn, tint } from '@/lib/utils';
 
 import { MapView } from './components/Map/MapView';
 import { TimelineSlider } from './components/Map/TimelineSlider';
@@ -33,17 +31,77 @@ import { PrivacyControls } from './components/Sidebar/PrivacyControls';
 import { RiskMeter } from './components/Dashboard/RiskMeter';
 import { ComparisonChart } from './components/Dashboard/ComparisonChart';
 import { Walkthrough } from './components/Teaching/Walkthrough';
+import { useColorScheme } from './hooks/useColorScheme';
 
 import * as api from './services/api';
-import type { 
-  Dataset, 
-  RiskScore, 
-  PrivacyTechnique, 
+import { getRiskColor } from './types';
+import type {
+  Dataset,
+  RiskScore,
+  PrivacyTechnique,
   AnonymizedDataset,
-  LocationPoint 
+  LocationPoint
 } from './types';
 
+type View = 'explore' | 'map' | 'results';
+
+/** True when the viewport is narrower than `px` (Tailwind breakpoints: lg 1024, xl 1280). */
+const isBelow = (px: number) => window.matchMedia(`(max-width: ${px - 1}px)`).matches;
+
+type Icon = ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+
+function Chip({
+  on,
+  onClick,
+  icon: IconComponent,
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  icon: Icon;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        'pressable inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[15px] font-bold sm:h-10',
+        on ? 'bg-brand text-white' : 'bg-field text-mute'
+      )}
+    >
+      <IconComponent className="size-4" aria-hidden />
+      {children}
+    </button>
+  );
+}
+
+function StatPill({
+  icon: IconComponent,
+  value,
+  label,
+  color,
+}: {
+  icon: Icon;
+  value: string | number;
+  label: string;
+  color?: string;
+}) {
+  return (
+    <div
+      className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-field px-4 sm:h-10"
+      style={color ? { background: tint(color, 12) } : undefined}
+    >
+      <IconComponent className="size-4 text-mute" aria-hidden />
+      <span className="num text-[15px]" style={color ? { color } : undefined}>{value}</span>
+      <span className="text-[13px] text-mute">{label}</span>
+    </div>
+  );
+}
+
 function App() {
+  const scheme = useColorScheme();
+  const [view, setView] = useState<View>('map');
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [riskScores, setRiskScores] = useState<Record<string, RiskScore>>({});
   const [anonymizedResult, setAnonymizedResult] = useState<AnonymizedDataset | null>(null);
@@ -66,6 +124,8 @@ function App() {
       setAnonymizedResult(null);
       setSelectedUserId(null);
       setShowAnonymized(false);
+      // On small screens, pick a user next.
+      if (isBelow(1024)) setView('explore');
     } catch (error) {
       console.error('Failed to generate dataset:', error);
     } finally {
@@ -79,6 +139,7 @@ function App() {
     try {
       const risks = await api.calculateRisk(dataset);
       setRiskScores(risks);
+      if (isBelow(1280)) setView('results');
     } catch (error) {
       console.error('Failed to calculate risk:', error);
     } finally {
@@ -119,6 +180,11 @@ function App() {
     setShowAnonymized(false);
   }, []);
 
+  const handleSelectUser = useCallback((userId: string | null) => {
+    setSelectedUserId(userId);
+    if (userId && isBelow(1024)) setView('map');
+  }, []);
+
   const getDisplayLocations = useCallback((): LocationPoint[] => {
     if (!selectedUserId || !dataset) return [];
     const sourceDataset = showAnonymized && anonymizedResult ? anonymizedResult.dataset : dataset;
@@ -126,204 +192,170 @@ function App() {
     return user?.locations || [];
   }, [selectedUserId, dataset, anonymizedResult, showAnonymized]);
 
-  const avgOriginalRisk = Object.values(riskScores).length > 0
+  const hasRisk = Object.keys(riskScores).length > 0;
+  const avgOriginalRisk = hasRisk
     ? Object.values(riskScores).reduce((sum, r) => sum + r.overall_risk, 0) / Object.values(riskScores).length
     : 0;
   const avgAnonymizedRisk = anonymizedResult?.new_risk_score.overall_risk || 0;
   const riskReduction = avgOriginalRisk > 0 ? ((avgOriginalRisk - avgAnonymizedRisk) / avgOriginalRisk * 100) : 0;
+  const totalPoints = dataset ? dataset.users.reduce((sum, u) => sum + u.locations.length, 0) : 0;
+
+  const tabs: { id: View; label: string; icon: Icon; disabled?: boolean; hideFromLg?: boolean }[] = [
+    { id: 'explore', label: 'Explore', icon: SlidersHorizontal, hideFromLg: true },
+    { id: 'map', label: 'Map', icon: MapPin },
+    { id: 'results', label: 'Results', icon: BarChart3, disabled: !hasRisk },
+  ];
+
+  const emptyExplore = (
+    <div className="flex flex-1 flex-col items-center justify-center gap-5 py-10 text-center">
+      <span className="grid size-16 place-items-center rounded-full bg-brand/12 text-accent-text">
+        <Database className="size-8" aria-hidden />
+      </span>
+      <p className="max-w-[16rem] text-[17px] text-mute">
+        Generate synthetic location data to explore privacy risks.
+      </p>
+      <Button size="lg" onClick={() => handleGenerateDataset(true)} disabled={isGenerating} className="w-full max-w-[16rem]">
+        {isGenerating ? <Loader2 className="animate-spin" aria-hidden /> : <Zap aria-hidden />}
+        Quick start
+      </Button>
+    </div>
+  );
 
   return (
     <TooltipProvider>
-      <div className="h-screen flex flex-col overflow-hidden bg-[hsl(225,25%,5%)]">
-
-        <header className="flex-shrink-0 relative">
-
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(252,100%,69%)] to-transparent opacity-50" />
-          
-          <div className="px-6 py-4 bg-[hsl(225,20%,8%)]">
-            <div className="flex items-center justify-between">
-
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[hsl(252,100%,69%)] to-[hsl(185,100%,50%)] flex items-center justify-center glow-primary">
-                    <Shield className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[hsl(185,100%,50%)] flex items-center justify-center border-2 border-[hsl(225,20%,8%)]">
-                    <MapPin className="w-2.5 h-2.5 text-[hsl(225,25%,5%)]" />
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gradient font-display tracking-tight">
-                    Location Privacy Lab
-                  </h1>
-                  <p className="text-xs text-[hsl(215,15%,55%)] flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3" />
-                    Interactive Re-identification Risk Analysis
-                  </p>
-                </div>
-              </div>
-              
-
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => handleGenerateDataset(true)}
-                  disabled={isGenerating}
-                  className="bg-gradient-to-r from-[hsl(252,100%,69%)] to-[hsl(252,100%,60%)] hover:from-[hsl(252,100%,75%)] hover:to-[hsl(252,100%,65%)] text-white border-0 shadow-lg shadow-[hsl(252,100%,69%)]/25"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Database className="w-4 h-4 mr-2" />
-                  )}
-                  {dataset ? 'Refresh Data' : 'Generate Dataset'}
-                </Button>
-                
-                {dataset && (
-                  <Button
-                    variant="outline"
-                    onClick={handleCalculateRisk}
-                    disabled={isCalculatingRisk}
-                    className="border-[hsl(225,15%,18%)] bg-[hsl(225,15%,12%)] hover:bg-[hsl(252,100%,69%)]/10 hover:border-[hsl(252,100%,69%)]/30"
-                  >
-                    {isCalculatingRisk ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Target className="w-4 h-4 mr-2" />
-                    )}
-                    Analyze Risk
-                  </Button>
-                )}
-                
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setShowWalkthrough(true)}
-                      className="icon-btn"
-                    >
-                      <HelpCircle className="w-5 h-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Take a guided tour</TooltipContent>
-                </Tooltip>
+      <div className="flex h-dvh flex-col overflow-hidden bg-page text-ink">
+        {/* ---------- Header ---------- */}
+        <header className="shrink-0 border-b border-line px-safe pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 sm:px-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-white sm:size-11">
+                <MapPin className="size-5 sm:size-6" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <h1 className="truncate text-[18px] font-extrabold leading-tight tracking-tight sm:text-[20px]">
+                  Location Privacy Lab
+                </h1>
+                <p className="hidden truncate text-[13px] text-mute sm:block">
+                  Interactive re-identification risk analysis
+                </p>
               </div>
             </div>
-            
 
-            {dataset && (
-              <div className="flex items-center gap-8 mt-5 pt-4 border-t border-[hsl(225,15%,15%)]">
-                <div className="flex items-center gap-6">
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <Switch
-                      checked={showHeatmap}
-                      onCheckedChange={setShowHeatmap}
-                    />
-                    <span className="text-sm text-[hsl(215,15%,55%)] group-hover:text-[hsl(185,100%,50%)] transition-colors flex items-center gap-2">
-                      <Layers className="w-4 h-4" />
-                      Heat Map
-                    </span>
-                  </label>
-                  
-                  {anonymizedResult && (
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <Switch
-                        checked={showAnonymized}
-                        onCheckedChange={setShowAnonymized}
-                      />
-                      <span className="text-sm text-[hsl(215,15%,55%)] group-hover:text-[hsl(185,100%,50%)] transition-colors flex items-center gap-2">
-                        <Lock className="w-4 h-4" />
-                        Protected View
-                      </span>
-                    </label>
-                  )}
-                </div>
-                
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                onClick={() => handleGenerateDataset(true)}
+                disabled={isGenerating}
+                aria-label={dataset ? 'Refresh data' : 'Generate dataset'}
+                className="max-sm:size-11 max-sm:rounded-full max-sm:px-0"
+              >
+                {isGenerating ? <Loader2 className="animate-spin" aria-hidden /> : <Database aria-hidden />}
+                <span className="hidden sm:inline">{dataset ? 'Refresh data' : 'Generate dataset'}</span>
+              </Button>
 
-                <div className="ml-auto flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[hsl(225,15%,10%)] border border-[hsl(225,15%,15%)]">
-                    <Users className="w-4 h-4 text-[hsl(252,100%,69%)]" />
-                    <span className="text-sm font-semibold number-display text-white">{dataset.users.length}</span>
-                    <span className="text-xs text-[hsl(215,15%,45%)]">users</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[hsl(225,15%,10%)] border border-[hsl(225,15%,15%)]">
-                    <MapPin className="w-4 h-4 text-[hsl(185,100%,50%)]" />
-                    <span className="text-sm font-semibold number-display text-white">
-                      {dataset.users.reduce((sum, u) => sum + u.locations.length, 0).toLocaleString()}
-                    </span>
-                    <span className="text-xs text-[hsl(215,15%,45%)]">points</span>
-                  </div>
-                  
-                  {Object.keys(riskScores).length > 0 && (
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
-                      avgOriginalRisk > 70 
-                        ? 'bg-[hsl(0,85%,60%)]/10 border-[hsl(0,85%,60%)]/30' 
-                        : avgOriginalRisk > 40 
-                        ? 'bg-[hsl(38,95%,55%)]/10 border-[hsl(38,95%,55%)]/30'
-                        : 'bg-[hsl(152,82%,45%)]/10 border-[hsl(152,82%,45%)]/30'
-                    }`}>
-                      <AlertTriangle className="w-4 h-4" style={{ color: avgOriginalRisk > 70 ? 'hsl(0,85%,60%)' : avgOriginalRisk > 40 ? 'hsl(38,95%,55%)' : 'hsl(152,82%,45%)' }} />
-                      <span className="text-sm font-semibold number-display" style={{ color: avgOriginalRisk > 70 ? 'hsl(0,85%,60%)' : avgOriginalRisk > 40 ? 'hsl(38,95%,55%)' : 'hsl(152,82%,45%)' }}>
-                        {avgOriginalRisk.toFixed(0)}%
-                      </span>
-                      <span className="text-xs text-[hsl(215,15%,45%)]">avg risk</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+              {dataset && (
+                <Button
+                  variant="outline"
+                  onClick={handleCalculateRisk}
+                  disabled={isCalculatingRisk}
+                  aria-label="Analyze risk"
+                  className="max-sm:size-11 max-sm:rounded-full max-sm:px-0"
+                >
+                  {isCalculatingRisk ? <Loader2 className="animate-spin" aria-hidden /> : <Target aria-hidden />}
+                  <span className="hidden sm:inline">Analyze risk</span>
+                </Button>
+              )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => setShowWalkthrough(true)}
+                    aria-label="Take a guided tour"
+                  >
+                    <HelpCircle aria-hidden />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Take a guided tour</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-        </header>
-        <main className="flex-1 flex overflow-hidden">
 
-          <aside className="w-80 flex-shrink-0 border-r border-[hsl(225,15%,12%)] bg-[hsl(225,20%,6%)]">
-            <ScrollArea className="h-full">
-              <div className="p-4 space-y-4">
-                {dataset ? (
-                  <>
-                    <UserSelector
-                      users={dataset.users}
-                      selectedUserId={selectedUserId}
-                      riskScores={riskScores}
-                      onSelectUser={setSelectedUserId}
-                    />
-                    <PrivacyControls
-                      onApply={handleApplyPrivacy}
-                      onReset={handleReset}
-                      isLoading={isAnonymizing}
-                      isAnonymized={!!anonymizedResult}
-                    />
-                    {selectedUserId && (
-                      <TimelineSlider
-                        locations={getDisplayLocations()}
-                        onChange={setTimeFilter}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <div className="h-96 flex flex-col items-center justify-center text-center px-4">
-                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[hsl(252,100%,69%)]/20 to-[hsl(185,100%,50%)]/20 flex items-center justify-center mb-6 animate-float">
-                      <Database className="w-10 h-10 text-[hsl(252,100%,69%)]" />
-                    </div>
-                    <p className="text-[hsl(215,15%,55%)] text-sm mb-6">
-                      Generate synthetic location data to explore privacy risks
-                    </p>
-                    <Button 
-                      onClick={() => handleGenerateDataset(true)}
-                      className="bg-gradient-to-r from-[hsl(252,100%,69%)] to-[hsl(252,100%,60%)] hover:from-[hsl(252,100%,75%)] hover:to-[hsl(252,100%,65%)] text-white"
-                    >
-                      <Zap className="w-4 h-4 mr-2" />
-                      Quick Start
-                    </Button>
-                  </div>
+          {dataset && (
+            <div className="no-scrollbar -mx-4 mt-3 flex items-center gap-2 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+              <Chip on={showHeatmap} onClick={() => setShowHeatmap(v => !v)} icon={Layers}>
+                Heat map
+              </Chip>
+              {anonymizedResult && (
+                <Chip on={showAnonymized} onClick={() => setShowAnonymized(v => !v)} icon={Lock}>
+                  Protected view
+                </Chip>
+              )}
+
+              <div className="ml-auto flex items-center gap-2 pl-2">
+                <StatPill icon={Users} value={dataset.users.length} label="users" />
+                <StatPill icon={MapPin} value={totalPoints.toLocaleString()} label="points" />
+                {hasRisk && (
+                  <StatPill
+                    icon={AlertTriangle}
+                    value={`${avgOriginalRisk.toFixed(0)}%`}
+                    label="avg risk"
+                    color={getRiskColor(avgOriginalRisk)}
+                  />
                 )}
               </div>
-            </ScrollArea>
-          </aside>
-          
+            </div>
+          )}
+        </header>
 
-          <div className="flex-1 relative">
+        {/* ---------- Panels ---------- */}
+        <main className="flex min-h-0 flex-1">
+          {/* Explore */}
+          <aside
+            className={cn(
+              'min-h-0 w-full flex-col overflow-y-auto overscroll-contain px-safe py-4 lg:flex lg:w-80 lg:shrink-0 lg:border-r lg:border-line lg:px-4',
+              view === 'explore' ? 'flex' : 'hidden'
+            )}
+          >
+            <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 lg:max-w-none">
+              {dataset ? (
+                <>
+                  <UserSelector
+                    users={dataset.users}
+                    selectedUserId={selectedUserId}
+                    riskScores={riskScores}
+                    onSelectUser={handleSelectUser}
+                  />
+                  <PrivacyControls
+                    onApply={handleApplyPrivacy}
+                    onReset={handleReset}
+                    isLoading={isAnonymizing}
+                    isAnonymized={!!anonymizedResult}
+                  />
+                  {selectedUserId && (
+                    <TimelineSlider
+                      locations={getDisplayLocations()}
+                      onChange={setTimeFilter}
+                    />
+                  )}
+                </>
+              ) : (
+                emptyExplore
+              )}
+            </div>
+          </aside>
+
+          {/* Map / welcome */}
+          <div
+            className={cn(
+              'relative min-w-0 flex-1',
+              view === 'explore' ? 'hidden lg:block' : view === 'results' ? 'hidden xl:block' : 'block'
+            )}
+          >
             {dataset ? (
               <MapView
+                key={scheme}
+                dark={scheme === 'dark'}
                 users={showAnonymized && anonymizedResult ? anonymizedResult.dataset.users : dataset.users}
                 selectedUserId={selectedUserId}
                 riskScores={riskScores}
@@ -333,146 +365,177 @@ function App() {
                 showAnonymized={showAnonymized}
               />
             ) : (
-              <div className="h-full flex flex-col items-center justify-center bg-[hsl(225,20%,6%)]">
-                <div className="text-center max-w-xl mx-auto px-8">
-
-                  <div className="relative mb-10">
-                    <div className="w-40 h-40 mx-auto rounded-[2rem] bg-gradient-to-br from-[hsl(252,100%,69%)]/10 to-[hsl(185,100%,50%)]/10 flex items-center justify-center border border-[hsl(225,15%,15%)] animate-float">
-                      <MapPin className="w-20 h-20 text-[hsl(252,100%,69%)]" />
-                    </div>
-                    <div className="absolute top-4 right-16 w-12 h-12 rounded-2xl bg-[hsl(0,85%,60%)]/10 flex items-center justify-center border border-[hsl(0,85%,60%)]/20 animate-pulse-soft">
-                      <AlertTriangle className="w-6 h-6 text-[hsl(0,85%,60%)]" />
-                    </div>
-                    <div className="absolute bottom-4 left-16 w-14 h-14 rounded-2xl bg-[hsl(152,82%,45%)]/10 flex items-center justify-center border border-[hsl(152,82%,45%)]/20">
-                      <Shield className="w-7 h-7 text-[hsl(152,82%,45%)]" />
-                    </div>
-                  </div>
-                  
-                  <h2 className="text-3xl font-bold font-display mb-4 text-white">
-                    Discover Location Privacy Risks
+              <div className="flex h-full overflow-y-auto">
+                <div className="m-auto w-full max-w-2xl px-safe py-10 sm:px-8">
+                  <h2 className="hero">
+                    <span>Your location says</span>
+                    <span>more than you think.</span>
                   </h2>
-                  <p className="text-[hsl(215,15%,55%)] mb-8 text-lg leading-relaxed">
-                    Your location data tells more about you than you think. 
-                    See how just a few GPS points can reveal your identity.
+                  <p className="mt-5 max-w-lg text-[17px] leading-relaxed text-mute sm:text-[18px]">
+                    See how just a few GPS points can point to you, then try the techniques that hide you.
                   </p>
-                  
-                  <div className="flex items-center justify-center gap-4">
-                    <Button 
+
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <Button
                       size="lg"
                       onClick={() => handleGenerateDataset(true)}
-                      className="bg-gradient-to-r from-[hsl(252,100%,69%)] to-[hsl(185,100%,50%)] hover:from-[hsl(252,100%,75%)] hover:to-[hsl(185,100%,60%)] text-white shadow-xl shadow-[hsl(252,100%,69%)]/20"
+                      disabled={isGenerating}
+                      className="w-full sm:w-auto"
                     >
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Start Exploring
+                      {isGenerating && <Loader2 className="animate-spin" aria-hidden />}
+                      Start exploring
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
                       size="lg"
+                      variant="outline"
                       onClick={() => setShowWalkthrough(true)}
-                      className="text-[hsl(215,15%,55%)] hover:text-white"
+                      className="w-full sm:w-auto"
                     >
                       Take a tour
-                      <ChevronRight className="w-5 h-5 ml-1" />
+                      <ChevronRight aria-hidden />
                     </Button>
                   </div>
+
+                  <ul className="mt-10 grid gap-3 sm:grid-cols-3">
+                    {[
+                      { icon: MapPin, title: 'Trace', text: 'Follow a trajectory on the map.' },
+                      { icon: AlertTriangle, title: 'Analyze', text: 'See how identifiable it is.' },
+                      { icon: Shield, title: 'Protect', text: 'Apply a privacy technique.' },
+                    ].map(item => (
+                      <li key={item.title} className="flex gap-3 rounded-[20px] bg-field p-4 sm:flex-col">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand/12 text-accent-text">
+                          <item.icon className="size-5" aria-hidden />
+                        </span>
+                        <div>
+                          <div className="text-[17px] font-extrabold tracking-tight">{item.title}</div>
+                          <div className="text-[15px] text-mute">{item.text}</div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             )}
           </div>
-          
 
-          {dataset && Object.keys(riskScores).length > 0 && (
-            <aside className="w-[420px] flex-shrink-0 border-l border-[hsl(225,15%,12%)] bg-[hsl(225,20%,6%)]">
-              <ScrollArea className="h-full">
-                <div className="p-5 space-y-5">
-
-                  <div className="gradient-border p-5">
-                    <div className="section-title mb-4 flex items-center gap-2">
-                      <Shield className="w-4 h-4" />
-                      Risk Overview
-                    </div>
-                    <div className="flex justify-around">
-                      <RiskMeter risk={avgOriginalRisk} label="Original" size="sm" />
-                      {anonymizedResult && (
-                        <RiskMeter risk={avgAnonymizedRisk} label="Protected" size="sm" />
-                      )}
-                    </div>
-                    
-                    {anonymizedResult && riskReduction > 0 && (
-                      <div className="mt-5 p-4 rounded-xl bg-[hsl(152,82%,45%)]/10 border border-[hsl(152,82%,45%)]/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-[hsl(215,15%,55%)]">Risk Reduction</span>
-                          <span className="text-xl font-bold number-display text-[hsl(152,82%,45%)]">
-                            -{riskReduction.toFixed(0)}%
-                          </span>
-                        </div>
-                        <Progress value={riskReduction} className="h-2" />
-                      </div>
+          {/* Results */}
+          {dataset && (
+            <aside
+              className={cn(
+                'min-h-0 w-full flex-col overflow-y-auto overscroll-contain px-safe py-4 xl:w-[380px] xl:shrink-0 xl:border-l xl:border-line xl:px-4 2xl:w-[420px]',
+                view === 'results' ? 'flex' : 'hidden',
+                hasRisk ? 'xl:flex' : 'xl:hidden'
+              )}
+            >
+              <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 xl:max-w-none">
+                <section className="rounded-[20px] bg-field p-4 sm:p-5">
+                  <header className="mb-4 flex items-center gap-2 text-[17px] font-extrabold tracking-tight">
+                    <Shield className="size-5 text-mute" aria-hidden />
+                    Risk overview
+                  </header>
+                  <div className="flex justify-around rounded-[16px] bg-page py-5">
+                    <RiskMeter risk={avgOriginalRisk} label="Original" size="sm" />
+                    {anonymizedResult && (
+                      <RiskMeter risk={avgAnonymizedRisk} label="Protected" size="sm" />
                     )}
                   </div>
-                  
 
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { value: dataset.users.length, label: 'Users', icon: Users, color: 'hsl(252,100%,69%)' },
-                      { value: `${(dataset.users.reduce((sum, u) => sum + u.locations.length, 0) / 1000).toFixed(1)}k`, label: 'Locations', icon: MapPin, color: 'hsl(185,100%,50%)' },
-                      { value: Object.values(riskScores).filter(r => r.home_inferred).length, label: 'Homes Found', icon: Home, color: 'hsl(0,85%,60%)' },
-                      { value: Object.values(riskScores).filter(r => r.work_inferred).length, label: 'Works Found', icon: Building, color: 'hsl(38,95%,55%)' },
-                    ].map((stat, i) => (
-                      <div key={i} className="stat-card p-4 rounded-xl bg-[hsl(225,20%,8%)] border border-[hsl(225,15%,15%)]">
-                        <stat.icon className="w-5 h-5 mb-2" style={{ color: stat.color }} />
-                        <div className="text-2xl font-bold number-display text-white">{stat.value}</div>
-                        <div className="text-[10px] text-[hsl(215,15%,45%)] uppercase tracking-wider mt-1">{stat.label}</div>
+                  {anonymizedResult && riskReduction > 0 && (
+                    <div className="mt-3 rounded-[16px] bg-page p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-[14px] text-mute">Risk reduction</span>
+                        <span className="num text-[22px] text-risk-low">
+                          -{riskReduction.toFixed(0)}%
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                  
-
-                  <ComparisonChart
-                    originalRisk={Object.values(riskScores)[0]}
-                    anonymizedRisk={anonymizedResult?.new_risk_score}
-                    utilityLoss={anonymizedResult?.utility_loss}
-                    chartType={chartType}
-                  />
-                  
-
-                  {anonymizedResult && (
-                    <Card className="animate-fade-in bg-[hsl(225,20%,8%)] border-[hsl(225,15%,15%)]">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2 text-white">
-                          <Zap className="w-4 h-4 text-[hsl(185,100%,50%)]" />
-                          Applied Protection
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-[hsl(215,15%,55%)]">Technique</span>
-                          <Badge className="bg-gradient-to-r from-[hsl(252,100%,69%)] to-[hsl(185,100%,50%)] text-white border-0">
-                            {anonymizedResult.technique.replace('-', ' ')}
-                          </Badge>
-                        </div>
-                        {Object.entries(anonymizedResult.parameters).map(([key, value]) => (
-                          <div key={key} className="flex items-center justify-between">
-                            <span className="text-sm text-[hsl(215,15%,55%)] capitalize">{key}</span>
-                            <span className="text-sm font-medium number-display text-white">{value}</span>
-                          </div>
-                        ))}
-                        <Separator className="bg-[hsl(225,15%,15%)]" />
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-[hsl(215,15%,55%)]">Utility Loss</span>
-                          <Badge variant="outline" className="border-[hsl(38,95%,55%)]/30 text-[hsl(38,95%,55%)]">
-                            {anonymizedResult.utility_loss.toFixed(1)}%
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      <Progress value={riskReduction} className="h-2" />
+                    </div>
                   )}
+                </section>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: dataset.users.length, label: 'Users', icon: Users },
+                    { value: `${(totalPoints / 1000).toFixed(1)}k`, label: 'Locations', icon: MapPin },
+                    { value: Object.values(riskScores).filter(r => r.home_inferred).length, label: 'Homes found', icon: Home },
+                    { value: Object.values(riskScores).filter(r => r.work_inferred).length, label: 'Works found', icon: Building },
+                  ].map(stat => (
+                    <div key={stat.label} className="rounded-[20px] bg-field p-4">
+                      <stat.icon className="mb-2 size-5 text-mute" aria-hidden />
+                      <div className="num text-[28px] leading-none">{stat.value}</div>
+                      <div className="eyebrow mt-1.5">{stat.label}</div>
+                    </div>
+                  ))}
                 </div>
-              </ScrollArea>
+
+                <ComparisonChart
+                  originalRisk={Object.values(riskScores)[0]}
+                  anonymizedRisk={anonymizedResult?.new_risk_score}
+                  utilityLoss={anonymizedResult?.utility_loss}
+                  chartType={chartType}
+                />
+
+                {anonymizedResult && (
+                  <section className="animate-fade-in rounded-[20px] bg-field p-4 sm:p-5">
+                    <header className="mb-3 flex items-center gap-2 text-[17px] font-extrabold tracking-tight">
+                      <Zap className="size-5 text-mute" aria-hidden />
+                      Applied protection
+                    </header>
+                    <dl className="space-y-3 rounded-[16px] bg-page p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <dt className="text-[14px] text-mute">Technique</dt>
+                        <dd>
+                          <Badge className="capitalize">{anonymizedResult.technique.replace(/-/g, ' ')}</Badge>
+                        </dd>
+                      </div>
+                      {Object.entries(anonymizedResult.parameters).map(([key, value]) => (
+                        <div key={key} className="flex items-center justify-between gap-3">
+                          <dt className="text-[14px] capitalize text-mute">{key.replace(/_/g, ' ')}</dt>
+                          <dd className="num text-[15px]">{value}</dd>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+                        <dt className="text-[14px] text-mute">Utility loss</dt>
+                        <dd className="num text-[15px] text-risk-mid">
+                          {anonymizedResult.utility_loss.toFixed(1)}%
+                        </dd>
+                      </div>
+                    </dl>
+                  </section>
+                )}
+              </div>
             </aside>
           )}
         </main>
-        
+
+        {/* ---------- Tab bar (below xl) ---------- */}
+        <nav
+          aria-label="Sections"
+          className="px-safe shrink-0 border-t border-line bg-page pt-2 pb-safe xl:hidden"
+        >
+          <div className="mx-auto flex max-w-xl gap-2">
+            {tabs.map(tab => {
+              const active = view === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setView(tab.id)}
+                  disabled={tab.disabled}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'pressable flex h-12 flex-1 items-center justify-center gap-2 rounded-[16px] text-[15px] font-bold disabled:opacity-35',
+                    active ? 'bg-brand text-white' : 'bg-field text-mute',
+                    tab.hideFromLg && 'lg:hidden'
+                  )}
+                >
+                  <tab.icon className="size-5" aria-hidden />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
         {showWalkthrough && <Walkthrough onClose={() => setShowWalkthrough(false)} />}
       </div>
     </TooltipProvider>
